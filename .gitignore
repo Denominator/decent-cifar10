@@ -1,3 +1,6 @@
+# decent cifar 10
+tf_decent_cifar10/tmp/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
