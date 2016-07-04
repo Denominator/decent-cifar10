@@ -47,6 +47,7 @@ import time
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from tensorflow.python.training import learning_rate_decay
 # from tensorflow.models.image.cifar10 import cifar10
 import cifar10
 
@@ -151,24 +152,50 @@ def train():
   with tf.Graph().as_default(), tf.device('/cpu:0'):
     # Create a variable to count the number of train() calls. This equals the
     # number of batches processed * FLAGS.num_gpus.
+
     global_step = tf.get_variable(
         'global_step', [],
+        dtype=tf.int32,
         initializer=tf.constant_initializer(0), trainable=False)
+
+    # global_step = tf.Variable(0, trainable=False)
 
     # Calculate the learning rate schedule.
     num_batches_per_epoch = (cifar10.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN /
                              FLAGS.batch_size)
+    print(cifar10.NUM_EPOCHS_PER_DECAY)
     decay_steps = int(num_batches_per_epoch * cifar10.NUM_EPOCHS_PER_DECAY)
 
-    # Decay the learning rate exponentially based on the number of steps.
-    lr = tf.train.exponential_decay(cifar10.INITIAL_LEARNING_RATE,
-                                    global_step,
-                                    decay_steps,
-                                    cifar10.LEARNING_RATE_DECAY_FACTOR,
-                                    staircase=True)
+    # # Decay the learning rate exponentially based on the number of steps.
+    # lr = tf.train.exponential_decay(cifar10.INITIAL_LEARNING_RATE,
+    #                                 global_step,
+    #                                 decay_steps,
+    #                                 cifar10.LEARNING_RATE_DECAY_FACTOR,
+    #                                 staircase=True)
+
+    # lr manual control
+    lr_boundaries = list()
+    lr_values = list()
+    for drop_no in range(1, 21):
+      cifar10.LR_DROP_EVERY_NO_STEPS = cifar10.LR_DROP_EVERY_NO_EPOCHS * num_batches_per_epoch
+      lr_boundary = int(drop_no * cifar10.LR_DROP_EVERY_NO_STEPS)
+      lr_boundaries.append(lr_boundary)
+
+      lr_value = cifar10.INITIAL_LEARNING_RATE / 2 ** (drop_no - 1)
+      lr_values.append(lr_value)
+    
+    print(lr_boundaries)
+    print(lr_values)
+
+    # boundaries = [100000, 110000]
+    # values = [1.0, 0.5, 0.1]
+    # int_global_step = int(global_step)
+    lr = learning_rate_decay.piecewise_constant(global_step, lr_boundaries, lr_values)
+
 
     # Create an optimizer that performs gradient descent.
-    opt = tf.train.GradientDescentOptimizer(lr)
+    # opt = tf.train.GradientDescentOptimizer(lr)
+    opt = tf.train.MomentumOptimizer(lr, cifar10.MOMENTUM)
 
     # Calculate the gradients for each model tower.
     tower_grads = []
