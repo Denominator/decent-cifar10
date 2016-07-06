@@ -49,11 +49,17 @@ import tensorflow as tf
 # from tensorflow.models.image.cifar10 import cifar10
 import cifar10
 
+
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', './tmp/cifar10_train',
+# tf.app.flags.DEFINE_string('train_dir', './tmp/cifar10_train',
+#                            """Directory where to write event logs """
+#                            """and checkpoint.""")
+
+tf.app.flags.DEFINE_string('train_dir', './' + FLAGS.experiment_prefix + '/cifar10_train',
                            """Directory where to write event logs """
                            """and checkpoint.""")
+
 tf.app.flags.DEFINE_integer('max_steps', 1000000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
