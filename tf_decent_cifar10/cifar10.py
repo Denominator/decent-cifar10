@@ -86,8 +86,8 @@ NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
 LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
 # INITIAL_LEARNING_RATE = 10.0       # Initial learning rate.
 # INITIAL_LEARNING_RATE = 1.0       # Initial learning rate.
-# INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
-INITIAL_LEARNING_RATE = 0.01       # Initial learning rate.
+INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
+# INITIAL_LEARNING_RATE = 0.01       # Initial learning rate.
 
 MOMENTUM = 0.9
 
@@ -326,14 +326,31 @@ def batch_norm(inputs,
                                 trainable=trainable,
                                 # restore=restore
                                 )
+      # # debug
+      # params_norm = tf.global_norm([beta])
+      # beta = tf.Print(beta, [params_norm], message="BN norm " + beta.name)
+
     if scale:
     # with tf.device('/cpu:0'):
       gamma = tf.get_variable('gamma',
                                  params_shape,
-                                 initializer=tf.ones_initializer,
+                                 # initializer=tf.ones_initializer, #this makes sense and used to be like this
+                                 initializer=tf.random_uniform_initializer(0, 1), # this is what Torch does
                                  trainable=trainable,
                                  # restore=restore
                                  )
+      # # debug
+      # params_norm = tf.global_norm([gamma])
+      # gamma = tf.Print(gamma, [params_norm], message="BN norm " + gamma.name)
+
+      # # debug to del
+      # # params_norm = tf.global_norm([gamma])
+      # gamma = tf.Print(gamma, [gamma], summarize=2048, message="full print gamma " + gamma.name)
+
+      # print("gamma shape")
+      # print(gamma.get_shape())
+
+
     # Create moving_mean and moving_variance add them to
     # GraphKeys.MOVING_AVERAGE_VARIABLES collections.
     moving_collections = [moving_vars, tf.GraphKeys.MOVING_AVERAGE_VARIABLES]
@@ -397,24 +414,24 @@ def create_conv_bn_relu_block(idx, input, no_in_channels, no_out_channels, paddi
     print("TODO: try using no_in_channels instead of no_out_channels for init of the convnet, MRS init seems to be closer to that")
     n_factor = no_out_channels * 3 * 3 # v.kW*v.kH*v.nOutputPlane from Torch
     init_stddev = math.sqrt(2/n_factor)
-    kernel = _variable_with_weight_decay_init_normal('weights', shape=[3, 3, no_in_channels, no_out_channels], stddev=init_stddev, wd=0.0)
+    kernel = _variable_with_weight_decay_init_normal('weights', shape=[3, 3, no_in_channels, no_out_channels], stddev=init_stddev, wd=0.0005)
 
-    # debug
-    params_norm = tf.global_norm([kernel])
-    kernel = tf.Print(kernel, [params_norm], message="norm of the kernel of conv " + idx)
+    # # debug
+    # params_norm = tf.global_norm([kernel])
+    # kernel = tf.Print(kernel, [params_norm], message="norm of the kernel of conv " + idx)
 
     conv = tf.nn.conv2d(input, kernel, [1, 1, 1, 1], padding=padding)
     # print(conv)
     biases = _variable_on_cpu('biases', [no_out_channels], tf.constant_initializer(0.0))
 
-    # debug
-    params_norm = tf.global_norm([biases])
-    biases = tf.Print(biases, [params_norm], message="norm of the bias of conv " + idx)
+    # # debug
+    # params_norm = tf.global_norm([biases])
+    # biases = tf.Print(biases, [params_norm], message="norm of the bias of conv " + idx)
 
     conv = tf.nn.bias_add(conv, biases)
 
     # add batch norm here
-    conv = batch_norm(conv)
+    conv = batch_norm(conv, scope=scope)
 
     conv = tf.nn.relu(conv)
     _activation_summary(conv)
@@ -558,11 +575,11 @@ def inference(images):
     half_range = 1.0 / math.sqrt(512)
 
     # weights = _variable_with_weight_decay_init_xavier('weights', shape=[dim, 512], wd=0.0)
-    weights = _variable_with_weight_decay_init_ref_model_linear_uniform('weights', shape=[dim, 512], half_range=half_range, wd=0.0)
+    weights = _variable_with_weight_decay_init_ref_model_linear_uniform('weights', shape=[dim, 512], half_range=half_range, wd=0.0005)
 
-    # debug
-    params_norm = tf.global_norm([weights])
-    weights = tf.Print(weights, [params_norm], message="norm of the linear layer weight (512x512)")
+    # # debug
+    # params_norm = tf.global_norm([weights])
+    # weights = tf.Print(weights, [params_norm], message="norm of the linear layer weight (512x512)")
 
     # tf.random_uniform_initializer(-half_range, half_range))
     
@@ -570,17 +587,17 @@ def inference(images):
     # biases = _variable_on_cpu('biases', [512], tf.constant_initializer(0.0))
     biases = _variable_on_cpu('biases', [512], tf.random_uniform_initializer(-half_range, half_range))
 
-    # debug
-    params_norm = tf.global_norm([biases])
-    biases = tf.Print(biases, [params_norm], message="norm of the linear layer bias (512)")
+    # # debug
+    # params_norm = tf.global_norm([biases])
+    # biases = tf.Print(biases, [params_norm], message="norm of the linear layer bias (512)")
 
     local3 = tf.matmul(reshape, weights) + biases
     _activation_summary(local3)
   
-  ##################
+    ##################
 
-  #BN
-  local3 = batch_norm(local3)
+    #BN
+    local3 = batch_norm(local3, scope=scope)
 
   #ReLU
   local3 = tf.nn.relu(local3, name=scope.name)
@@ -595,18 +612,18 @@ def inference(images):
     #stdv = 1./math.sqrt(self.weight:size(2))
     half_range = 1.0 / math.sqrt(512)
 
-    weights = _variable_with_weight_decay_init_ref_model_linear_uniform('weights', shape=[512, NUM_CLASSES], half_range=half_range, wd=0.0)
+    weights = _variable_with_weight_decay_init_ref_model_linear_uniform('weights', shape=[512, NUM_CLASSES], half_range=half_range, wd=0.0005)
 
-    # debug
-    params_norm = tf.global_norm([weights])
-    weights = tf.Print(weights, [params_norm], message="norm of the linear layer weight (512x10)")
+    # # debug
+    # params_norm = tf.global_norm([weights])
+    # weights = tf.Print(weights, [params_norm], message="norm of the linear layer weight (512x10)")
     
     # biases = _variable_on_cpu('biases', [NUM_CLASSES], tf.constant_initializer(0.0))
     biases = _variable_on_cpu('biases', [NUM_CLASSES], tf.random_uniform_initializer(-half_range, half_range))
 
-    # debug
-    params_norm = tf.global_norm([biases])
-    biases = tf.Print(biases, [params_norm], message="norm of the linear layer biases (10)")
+    # # debug
+    # params_norm = tf.global_norm([biases])
+    # biases = tf.Print(biases, [params_norm], message="norm of the linear layer biases (10)")
 
     softmax_linear = tf.nn.relu(tf.matmul(local3, weights) + biases, name=scope.name)
     _activation_summary(softmax_linear)
@@ -742,13 +759,13 @@ def train(total_loss, global_step):
     # print("grads")
     # print(grads)
 
-    #debug
-    # Add histograms for gradients.
-    for grad, var in grads:
-      if grad is not None:
-        g_norm = tf.global_norm([grad])
-        g_norm = tf.Print(g_norm, [g_norm], "grad norm for " + var.op.name)
-        tf.histogram_summary("g_norm_for_" + var.op.name, g_norm)
+    # #debug
+    # # Add histograms for gradients.
+    # for grad, var in grads:
+    #   if grad is not None:
+    #     g_norm = tf.global_norm([grad])
+    #     g_norm = tf.Print(g_norm, [g_norm], "grad norm for " + var.op.name)
+    #     tf.histogram_summary("g_norm_for_" + var.op.name, g_norm)
 
     #debug
     # grads_only = [g_pair[0] for g_pair in grads]
