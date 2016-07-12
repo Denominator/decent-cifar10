@@ -56,7 +56,7 @@ import cifar10_input
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('experiment_prefix', 'experiments/no_wd_momentum_lr_0_1', "Prefix for the current experiment")
+tf.app.flags.DEFINE_string('experiment_prefix', 'experiments/wd_0_0005_momentum_lr_0_1', "Prefix for the current experiment")
 # tf.app.flags.DEFINE_string('experiment_prefix', 'exp_wd_0', "Prefix for the current experiment")
 
 # Basic model parameters.
