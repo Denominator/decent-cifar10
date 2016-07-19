@@ -50,6 +50,22 @@ import tensorflow as tf
 import cifar10
 
 
+
+# --------------------------------------
+# started implementing in-mem dataset
+# import cifar10_input_preloaded
+# (train_x, train_y), (test_x, test_y) = cifar10_input_preloaded.load_cifar_10_data()
+# print(train_x.shape)
+# print(train_y.shape)
+# print(test_x.shape)
+# print(test_y.shape)
+# print("train max, min")
+# print(train_x.max())
+# print(train_x.min())
+# exit()
+# --------------------------------------
+
+
 FLAGS = tf.app.flags.FLAGS
 
 # tf.app.flags.DEFINE_string('train_dir', './tmp/cifar10_train',
