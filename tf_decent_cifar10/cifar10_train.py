@@ -67,6 +67,32 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False,
 
 
 def train():
+
+  # # debug
+
+  # true_classes = np.ndarray(shape=(FLAGS.batch_size, 1), dtype=int)
+  # true_classes.fill(2)
+
+
+  # # Create a pair of constant ops, add the numpy 
+  # # array matrices.
+  # true_classes_tf_matrix = tf.constant(true_classes, dtype=tf.int64)
+
+  # # playing with introducing the sampler
+  # classes_sampler = tf.nn.learned_unigram_candidate_sampler(
+  #                                     true_classes_tf_matrix, 
+  #                                     1,                # true_classes
+  #                                     5,                # num_sampled
+  #                                     False,            # unique
+  #                                     10,               # range_max
+  #                                     seed=None, 
+  #                                     name="my_classes_sampler")
+
+  # # print(classes_sampler)
+  # # print("debug")
+  # # print(classes_sampler.set_sampler)
+  # # exit()
+
   """Train CIFAR-10 for a number of steps."""
   with tf.Graph().as_default():
     global_step = tf.Variable(0, trainable=False)
@@ -114,6 +140,16 @@ def train():
     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
 
     for step in xrange(FLAGS.max_steps):
+
+      # manually load the contents of images and labels
+      # before calling this sess.run()
+      # 1. have Cifar10 dataset in memory
+      # 2. create a mini-batch
+      # 3. set the placeholders/vars to the the mini-batch data
+      # 4. run one forward-backward step
+
+      # print("training step: " + str(step))
+
       start_time = time.time()
       _, loss_value = sess.run([train_op, loss])
       duration = time.time() - start_time

@@ -86,7 +86,8 @@ NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
 LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
 # INITIAL_LEARNING_RATE = 10.0       # Initial learning rate.
 # INITIAL_LEARNING_RATE = 1.0       # Initial learning rate.
-INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
+INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.  # gradient in Torch seems to have 2x the norm vs TF
+# INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
 # INITIAL_LEARNING_RATE = 0.01       # Initial learning rate.
 
 MOMENTUM = 0.9
